@@ -1,2 +1,6 @@
 node_modules
 assets/
+config.js
+index.js
+package.json
+package-lock.json
