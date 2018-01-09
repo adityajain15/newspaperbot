@@ -49,7 +49,7 @@ function tweetNewspaper(resp,i,prevData){
     download(`${baseUrl}${resp[i].medium_url}`, options, function(err){
       if (err) {
         console.log(`----------------Did not print ${i}-----------------`);
-        tweetNewspaper(resp,i+1,data);      
+        tweetNewspaper(resp,i+1,prevData);      
       }
 
       console.log(`Downloaded image ${i}`);
@@ -64,10 +64,8 @@ function tweetNewspaper(resp,i,prevData){
 
             let params = getParams(resp,prevData,i,mediaIdStr);
 
-            //console.log(params)
-
             Twitter.post('statuses/update', params, function (err, data, response) {
-              //console.log(data)
+              console.log(data);
               tweetNewspaper(resp,i+1,data);
             })
           }        
