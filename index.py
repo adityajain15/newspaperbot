@@ -6,6 +6,7 @@ import math
 import shutil
 import time
 import random
+import schedule
 
 requests.get('https://api.github.com/events')
 
@@ -25,9 +26,7 @@ def worker(chunk,thread_num,num_partitions,date):
         shutil.copyfileobj(img_resp.raw, out_file)
         print("%s Downloaded image %d"%(date,(thread_num*num_partitions)+i))
     if img_resp.status_code == 503:
-      print("-------------------------")
-      print("%s ERROR: Could not download image %d"%(date,(thread_num*num_partitions)+i))
-      print("-------------------------")
+      print('\x1b[1;37;41m'+" %s ERROR: Could not download image %d "%(date,(thread_num*num_partitions)+i)+ '\x1b[0m')
 
 def startTweetin(data,num_tweets,today_date):
   prevTweet = None
@@ -37,26 +36,22 @@ def startTweetin(data,num_tweets,today_date):
     if(prevTweet):
       status = "@%s (%d/%d) On this day, 100 years ago\n\nThe front page of '%s'\nPlace of publication: %s\n\nRead the high-resolution version here: %s%s"%(prevData.user.screen_name,i+1,num_tweets,data[i]['label'],data[i]['place_of_publication'],base_url,data[i]['url'])
     else:
-      status = "(%d/%d) On this day, 100 years ago\nThe front page of '%s'\nPlace of publication: %s\n\nRead the high-resolution version here: %s%s"%(i+1,num_tweets,data[i]['label'],data[i]['place_of_publication'],base_url,data[i]['url'])
+      status = "(%d/%d) On this day, 100 years ago\n\nThe front page of '%s'\nPlace of publication: %s\n\nRead the high-resolution version here: %s%s"%(i+1,num_tweets,data[i]['label'],data[i]['place_of_publication'],base_url,data[i]['url'])
 
     try:
       prevData = twtr.PostMedia(status,"assets/%d.jpg"%(i), possibly_sensitive=None, in_reply_to_status_id=prevTweet, latitude=None, longitude=None, place_id=None, display_coordinates=False)
       prevTweet = prevData.id
-      print("%s Tweeted image %d"%(today_date,i))
+      print('\x1b[6;30;42m'+" %s Tweeted image %d "%(today_date,i)+ '\x1b[0m')
       sucess+=1
     except twitter.error.TwitterError as theError:
-      print("-------------------------")
-      print(theError.args)
-      print("%s ERROR: Could not tweet image %d"%(today_date,i))
-      print("-------------------------")
-    time.sleep(10)
-    #andom.randint(0,15)
-  print("*****************************")
-  print("SUCCESS RATE: %d% (%d/%d)"%(((sucess/num_tweets)*100),sucess,num_tweets))
-  print("*****************************")
+      print('\x1b[1;37;41m'+"%s"%(theError.args)+ '\x1b[0m')
+      print('\x1b[1;37;41m'+" %s ERROR: Could not tweet image %d "%(today_date,i)+ '\x1b[0m')
+    time.sleep(8)
+  print('\x1b[1;37;44m'+" SUCCESS RATE: %d%% ( %d / %d ) " % (((sucess/num_tweets)*100),sucess,num_tweets)+ '\x1b[0m')
+  return schedule.CancelJob
 
 def getPictures():
-  today_date = arrow.now().shift(years=-100).format('YYYY-MM-DD')
+  today_date = arrow.now().shift(years=-100).shift(days=+1).format('YYYY-MM-DD')
   r = requests.get("%s/frontpages/%s.json" % (base_url,today_date))
   r_json = r.json()
   num_partitions = math.ceil(len(r_json)/8)
@@ -68,6 +63,10 @@ def getPictures():
     t.start()
   for i in range(0,8):
     threads[i].join()
-  startTweetin(r_json,len(r_json),today_date)
+  schedule.every().day.at("04:00").do(startTweetin,r_json,len(r_json),today_date)
 
-getPictures()
+schedule.every().day.at("22:00").do(getPictures)
+
+while 1:
+    schedule.run_pending()
+    time.sleep(1)
