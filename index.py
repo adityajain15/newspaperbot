@@ -10,8 +10,6 @@ import random
 import schedule
 import twitter
 
-requests.get('https://api.github.com/events')
-
 twtr = twitter.Api(
   consumer_key='consumer_key',
   consumer_secret='consumer_secret',
@@ -53,7 +51,7 @@ def startTweetin(data,num_tweets,today_date):
     except twitter.error.TwitterError as theError:
       print('\x1b[1;37;41m'+"%s"%(theError.args)+ '\x1b[0m')
       print('\x1b[1;37;41m'+" %s ERROR: Could not tweet image %d "%(today_date,i)+ '\x1b[0m')
-    time.sleep(5+random.randint(0,10))
+    time.sleep(7)
   print('\x1b[1;37;44m'+" SUCCESS RATE: %d%% ( %d / %d ) " % (((sucess/num_tweets)*100),sucess,num_tweets)+ '\x1b[0m')
   return schedule.CancelJob
 
@@ -64,7 +62,7 @@ def deleteExistingFiles():
 
 def getPictures():
   deleteExistingFiles()
-  today_date = arrow.now().shift(years=-100).shift(days=+1).format('YYYY-MM-DD')
+  today_date = arrow.now().shift(years=-100).format('YYYY-MM-DD')
   r = requests.get("%s/frontpages/%s.json" % (base_url,today_date))
   r_json = r.json()
   num_partitions = math.ceil(len(r_json)/8)
@@ -79,7 +77,7 @@ def getPictures():
   print('\x1b[1;37;44m'+"FINISHED DOWNLOADING IMAGES"+'\x1b[0m')
   schedule.every().day.at("04:00").do(startTweetin,r_json,len(r_json),today_date)
 
-schedule.every().day.at("22:00").do(getPictures)
+schedule.every().day.at("01:05").do(getPictures)
 
 while 1:
     schedule.run_pending()
