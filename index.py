@@ -51,7 +51,7 @@ def startTweetin(data,num_tweets,today_date):
     except twitter.error.TwitterError as theError:
       print('\x1b[1;37;41m'+"%s"%(theError.args)+ '\x1b[0m')
       print('\x1b[1;37;41m'+" %s ERROR: Could not tweet image %d "%(today_date,i)+ '\x1b[0m')
-    time.sleep(7)
+    time.sleep(3)
   print('\x1b[1;37;44m'+" SUCCESS RATE: %d%% ( %d / %d ) " % (((sucess/num_tweets)*100),sucess,num_tweets)+ '\x1b[0m')
   return schedule.CancelJob
 
@@ -68,16 +68,17 @@ def getPictures():
   num_partitions = math.ceil(len(r_json)/8)
   chunks = [r_json[x:x+num_partitions] for x in range(0, len(r_json), num_partitions)]
   threads = []
-  for i in range(0,8):
-    t = threading.Thread(target=worker, args=(chunks[i],i,num_partitions,today_date,))
+  print(chunks)
+  for i in range(0,len(chunks)):
+    t = threading.Thread(target=worker, args=(chunks[i],i,num_partitions,today_date))
     threads.append(t)
     t.start()
-  for i in range(0,8):
+  for i in range(0,len(chunks)):
     threads[i].join()
   print('\x1b[1;37;44m'+"FINISHED DOWNLOADING IMAGES"+'\x1b[0m')
-  schedule.every().day.at("04:00").do(startTweetin,r_json,len(r_json),today_date)
+  schedule.every().day.at("11:02").do(startTweetin,r_json,len(r_json),today_date)
 
-schedule.every().day.at("01:05").do(getPictures)
+schedule.every().day.at("11:01").do(getPictures)
 
 while 1:
     schedule.run_pending()
